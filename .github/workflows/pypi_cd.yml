@@ -5,26 +5,19 @@ on:
     tags:
       - "v*"
 
+
+# .github/workflows/ci-cd.yml
 jobs:
-  build-and-publish:
+  pypi-publish:
+    name: Upload release to PyPI
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/ivande_combiner
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.11"
+    # retrieve your distributions here
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine
-
-    - name: Build package
-      run: |
-        python setup.py sdist bdist_wheel
-
-    - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.4.2
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1

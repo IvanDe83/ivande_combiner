@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ivande_combiner",
-    version="0.0.6",
+    version="0.0.7",
     packages=find_packages(),
     description="basic functionality for classic sklearn ml",
     long_description=open("README.md").read(),

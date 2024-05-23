@@ -12,7 +12,8 @@ setup(
     url="https://github.com/IvanDe83/ivande_combiner",
     license="MIT",
     install_requires=[
-        "pytest==8.2.1",
+        "scikit-learn==1.5.0",
+        "pandas==2.2.2",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

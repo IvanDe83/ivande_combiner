@@ -6,10 +6,11 @@ from sklearn.exceptions import NotFittedError
 from ivande_combiner.transformers import (
     CalendarExtractor,
     CatCaster,
+    FeaturesOrder,
     NoInfoFeatureRemover,
-    OrderFeatures,
     OutlierRemover,
     ScalerPicker,
+    SimpleImputerPicker,
     WithAnotherColumnImputer,
 )
 
@@ -209,7 +210,7 @@ class TestOrderFeatures:
 
     def test_correct_outcome_order(self):
         expected = ["col_1", "col_2", "col_3", "col_0"]
-        t = OrderFeatures(order_features=expected[: -1])
+        t = FeaturesOrder(features_order=expected[: -1])
         calculated = t.fit_transform(self.df)
         assert expected == list(calculated.columns)
 
@@ -271,3 +272,76 @@ class TestScalerPicker:
         with pytest.raises(ValueError) as excinfo:
             OutlierRemover(method="wrong_method", cols_to_transform=["col_1"]).fit_transform(df)
         assert "unknown method wrong_method for outlier remover" in str(excinfo.value)
+
+
+class TestConstantImputer:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.df_nan = pd.DataFrame(
+            {
+                "col_1": [1, 2, 3],
+                "col_2": [None, None, None],
+                "col_3": [4, None, None],
+            }
+        )
+
+    @pytest.mark.parametrize(
+        "input_data, expected_output, strategy, cols_to_impute",
+        [
+            (
+                {"col_1": [1, None, 2], "col_2": [None, 3, None], "col_3": [None, 7, None], "col_4": [4, 5, 6]},
+                {"col_1": [1, 0, 2], "col_2": [0, 3, 0], "col_3": [1, 7, 1], "col_4": [4, 5, 6]},
+                "constant",
+                {("col_1", "col_2"): 0, ("col_3", ): 1, ("col_4", ): 2},
+            ),
+            (
+                {"col_1": [1, 2, 3, None], "col_2": [None, 1, 2, 12]},
+                {"col_1": [1, 2, 3, 2], "col_2": [5, 1, 2, 12]},
+                "mean",
+                None,
+            ),
+            (
+                {"col_1": [1, 2, 3, None], "col_2": [None, 1, 2, 12]},
+                {"col_1": [1, 2, 3, 2], "col_2": [2, 1, 2, 12]},
+                "median",
+                None,
+            ),
+            (
+                {"col_1": [1, 2, 1, None], "col_2": [None, 12, 2, 12]},
+                {"col_1": [1, 2, 1, 1], "col_2": [12, 12, 2, 12]},
+                "most_frequent",
+                None,
+            ),
+        ],
+        ids=[
+            "constant_impute",
+            "mean_impute",
+            "median_impute",
+            "most_frequent_impute",
+        ],
+    )
+    def test_correct_impute(self, input_data, expected_output, strategy, cols_to_impute):
+        df = pd.DataFrame(input_data)
+        expected = pd.DataFrame(expected_output)
+        t = SimpleImputerPicker(strategy=strategy, cols_to_impute=cols_to_impute)
+        calculated = t.fit_transform(df)
+        pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)
+
+    def test_can_catch_wrong_strategy(self):
+        with pytest.raises(ValueError) as excinfo:
+            df = self.df_nan.copy()
+            df.loc[0, "col_2"] = 1
+            SimpleImputerPicker(strategy="wrong_strategy").fit_transform(df)
+        assert "unknown strategy wrong_strategy should be constant, mean, median or most_frequent" in str(excinfo.value)
+
+    def test_can_catch_column_intersection_in_cols_to_impute(self):
+        with pytest.raises(ValueError) as excinfo:
+            cols_to_impute = {("col_1", "col_1"): 0, ("col_3", ): 1, ("col_4", ): 2}
+            SimpleImputerPicker(cols_to_impute=cols_to_impute).fit_transform(self.df_nan)
+        assert "some keys have intersection between them" in str(excinfo.value)
+
+    def test_can_catch_if_any_column_has_all_nans(self):
+        with pytest.raises(ValueError) as excinfo:
+            t = SimpleImputerPicker(strategy="mean")
+            t.fit_transform(self.df_nan)
+        assert "there are columns with all missing values" in str(excinfo.value)

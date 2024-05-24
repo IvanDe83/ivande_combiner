@@ -1,8 +1,9 @@
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import MinMaxScaler, PowerTransformer, RobustScaler, StandardScaler
 
-from .utils import check_fill, check_transform
+from .utils import check_fill, check_key_tuple_empty_intersection, check_transform
 
 
 class CalendarExtractor(BaseEstimator, TransformerMixin):
@@ -164,7 +165,7 @@ class WithAnotherColumnImputer(BaseEstimator, TransformerMixin):
 
     :param cols_to_impute: dictionary with column names as keys and column names to impute from as values
     """
-    def __init__(self, cols_to_impute=None):
+    def __init__(self, cols_to_impute: dict[str, str] = None):
         if cols_to_impute is None:
             raise ValueError("cols_to_impute parameter is should be filled")
         self.cols_to_impute = cols_to_impute
@@ -205,25 +206,25 @@ class CatCaster(BaseEstimator, TransformerMixin):
         return X_
 
 
-class OrderFeatures(BaseEstimator, TransformerMixin):
+class FeaturesOrder(BaseEstimator, TransformerMixin):
     """
     order features in the same order as in the order_features list
 
-    :param order_features: list of columns in the order you want them to be
+    :param features_order: list of columns in the order you want them to be
     """
-    def __init__(self, order_features: list[str]):
-        self.order_features = order_features
-        self.order_features_ = None
+    def __init__(self, features_order: list[str]):
+        self.features_order = features_order
+        self.features_order_ = None
 
     def fit(self, X, y=None):
         check_fill(X)
-        self.order_features_ = [col for col in self.order_features if col in X.columns]
-        self.order_features_ += [col for col in X.columns if col not in self.order_features_]
+        self.features_order_ = [col for col in self.features_order if col in X.columns]
+        self.features_order_ += [col for col in X.columns if col not in self.features_order_]
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self.order_features_, transformer_name="OrderFeatures")
-        X_ = X[self.order_features_]
+        check_transform(X, fitted_item=self.features_order_, transformer_name="OrderFeatures")
+        X_ = X[self.features_order_]
         return X_
 
 
@@ -272,4 +273,55 @@ class ScalerPicker(BaseEstimator, TransformerMixin):
         if self.scaler == "skip":
             return X_
         X_[self.cols_to_scale] = self.scaler.transform(X_[self.cols_to_scale])
+        return X_
+
+
+class SimpleImputerPicker(BaseEstimator, TransformerMixin):
+    """
+    impute missing values with a constant value
+
+    :param cols_to_impute: dictionary with tuple column names as keys and fill values as values
+    """
+    def __init__(self, strategy: str = "constant", cols_to_impute: dict[tuple[str], int] = None):
+        if cols_to_impute is not None:
+            check_key_tuple_empty_intersection(cols_to_impute)
+        self.cols_to_impute = cols_to_impute
+        self.strategy = strategy
+        self.imputer = None
+
+    def fit(self, X, y=None):
+        check_fill(X)
+        if X.isnull().all().any():
+             raise ValueError("there are columns with all missing values")
+
+        if self.strategy == "constant":
+            self.imputer = {}
+            for cols, fill_value in self.cols_to_impute.items():
+                cols_to_impute = [col for col in cols if col in X.columns]
+                if len(cols_to_impute) != 0:
+                    self.imputer[tuple(cols_to_impute)] = (
+                        SimpleImputer(strategy="constant", fill_value=fill_value, keep_empty_features=True)
+                        .set_output(transform="pandas")
+                        .fit(X[cols_to_impute])
+                    )
+        elif self.strategy in ("mean", "median", "most_frequent"):
+            self.imputer = (
+                SimpleImputer(strategy=self.strategy, keep_empty_features=True).set_output(transform="pandas").fit(X)
+            )
+        else:
+            raise ValueError(f"unknown strategy {self.strategy} should be constant, mean, median or most_frequent")
+
+        return self
+
+    def transform(self, X):
+        check_transform(X, fitted_item=self.imputer, transformer_name="ConstantImputer")
+        X_ = X.copy()
+
+        if self.strategy == "constant":
+            for cols, imputer in self.imputer.items():
+                cols = list(cols)
+                X_[cols] = imputer.transform(X_[cols])
+        else:
+            X_ = self.imputer.transform(X_)
+
         return X_

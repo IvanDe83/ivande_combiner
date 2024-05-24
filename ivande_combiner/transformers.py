@@ -278,9 +278,11 @@ class ScalerPicker(BaseEstimator, TransformerMixin):
 
 class SimpleImputerPicker(BaseEstimator, TransformerMixin):
     """
-    impute missing values with a constant value
+    impute missing values with a SimpleImputer
 
+    :param strategy: strategy for SimpleImputer. Possible values: "constant", "mean", "median", "most_frequent"
     :param cols_to_impute: dictionary with tuple column names as keys and fill values as values
+        (only for strategy="constant")
     """
     def __init__(self, strategy: str = "constant", cols_to_impute: dict[tuple[str], int] = None):
         if cols_to_impute is not None:

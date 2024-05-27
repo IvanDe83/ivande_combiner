@@ -294,7 +294,7 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         check_fill(X)
         if X.isnull().all().any():
-             raise ValueError("there are columns with all missing values")
+            raise ValueError("there are columns with all missing values")
 
         if self.strategy == "constant":
             self.imputer = {}

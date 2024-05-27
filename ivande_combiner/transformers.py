@@ -285,7 +285,7 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
     :param cols_to_impute: dictionary with tuple column names as keys and fill values as values
         (only for strategy="constant")
     """
-    def __init__(self, strategy: str = "constant", cols_to_impute: dict[tuple[str], int] | list[str] = None):
+    def __init__(self, strategy: str = "constant", cols_to_impute: dict[tuple[str, ...], int] | list[str] = None):
         if cols_to_impute is not None and isinstance(cols_to_impute, dict):
             check_key_tuple_empty_intersection(cols_to_impute)
         self.cols_to_impute = cols_to_impute
@@ -296,6 +296,9 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
         check_fill(X)
         if X.isnull().all().any():
             raise ValueError("there are columns with all missing values")
+
+        if self.cols_to_impute is None:
+            self.cols_to_impute = X.columns
 
         if self.strategy == "constant":
             self.imputer = {}

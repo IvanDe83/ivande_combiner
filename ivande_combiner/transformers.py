@@ -22,9 +22,6 @@ class CalendarExtractor(BaseEstimator, TransformerMixin):
     def __init__(self, date_col, calendar_level: int = None):
         self.date_col = date_col
         self.calendar_level = calendar_level
-        self.what_to_generate = ["year", "month", "day", "dayofweek", "dayofyear", "weekofyear"]
-        if self.calendar_level is not None:
-            self.what_to_generate = self.what_to_generate[: self.calendar_level]
 
     def fit(self, X, y=None):
         return self
@@ -36,7 +33,11 @@ class CalendarExtractor(BaseEstimator, TransformerMixin):
         X_[self.date_col] = pd.to_datetime(X_[self.date_col])
         cols_to_add = []
 
-        for what in self.what_to_generate:
+        what_to_generate = ["year", "month", "day", "dayofweek", "dayofyear", "weekofyear"]
+        if self.calendar_level is not None:
+            what_to_generate = what_to_generate[: self.calendar_level]
+
+        for what in what_to_generate:
             if what == "year":
                 year_col = X_[self.date_col].dt.year
                 year_col.name = "year"

@@ -70,7 +70,7 @@ class CalendarExtractor(BaseEstimator, TransformerMixin):
         return X_
 
 
-class NoInfoFeatureRemover(BaseEstimator, TransformerMixin):
+class NoInfoColsRemover(BaseEstimator, TransformerMixin):
     """
     remove columns with the same values along all rows
 
@@ -78,26 +78,26 @@ class NoInfoFeatureRemover(BaseEstimator, TransformerMixin):
     :param verbose: True if you want to see the list of removed columns
     """
     def __init__(self, cols_to_except: list[str] = None, verbose=False):
-        self.cols_to_remove = None
+        self._cols_to_remove = None
         self.cols_to_except = cols_to_except if cols_to_except is not None else []
         self.verbose = verbose
 
     def fit(self, X, y=None):
         check_fill(X)
-        self.cols_to_remove = []
+        self._cols_to_remove = []
 
         for col in X.columns:
             if X[col].nunique() <= 1 and col not in self.cols_to_except:
-                self.cols_to_remove.append(col)
+                self._cols_to_remove.append(col)
 
-        if self.verbose and self.cols_to_remove:
-            print(f"Columns {self.cols_to_remove} have no info and will be removed")
+        if self.verbose and self._cols_to_remove:
+            print(f"Columns {self._cols_to_remove} have no info and will be removed")
 
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self.cols_to_remove, transformer_name="NoInfoFeatureRemover")
-        X_ = X.drop(self.cols_to_remove, axis=1)
+        check_transform(X, fitted_item=self._cols_to_remove, transformer_name="NoInfoColsRemover")
+        X_ = X.drop(self._cols_to_remove, axis=1)
         return X_
 
 
@@ -117,12 +117,12 @@ class OutlierRemover(BaseEstimator, TransformerMixin):
             raise ValueError("cols_to_transform parameter is should be filled")
         self.cols_to_transform = cols_to_transform
         self.method = method
-        self.col_thresholds = None
+        self._col_thresholds = None
 
     def fit(self, X, y=None):
         check_fill(X)
         self.cols_to_transform = [col for col in self.cols_to_transform if col in X.columns]
-        self.col_thresholds = {}
+        self._col_thresholds = {}
 
         for col in self.cols_to_transform:
             if self.method == "iqr":
@@ -146,16 +146,16 @@ class OutlierRemover(BaseEstimator, TransformerMixin):
                 raise ValueError(f"unknown method {self.method} for outlier remover")
 
             s = X[col][(X[col] >= left_bound) & (X[col] <= right_bound)]
-            self.col_thresholds[col] = (s.min(), s.max())
+            self._col_thresholds[col] = (s.min(), s.max())
 
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self.col_thresholds, transformer_name="OutlierRemover")
+        check_transform(X, fitted_item=self._col_thresholds, transformer_name="OutlierRemover")
         X_ = X.copy()
 
         for col in self.cols_to_transform:
-            X_[col] = X_[col].clip(*self.col_thresholds[col])
+            X_[col] = X_[col].clip(*self._col_thresholds[col])
 
         return X_
 
@@ -207,25 +207,25 @@ class CatCaster(BaseEstimator, TransformerMixin):
         return X_
 
 
-class FeaturesOrder(BaseEstimator, TransformerMixin):
+class ColsOrder(BaseEstimator, TransformerMixin):
     """
-    order features in the same order as in the order_features list
+    order columns in the same order as in the cols_order list
 
-    :param features_order: list of columns in the order you want them to be
+    :param cols_order: list of columns in the order you want them to be
     """
-    def __init__(self, features_order: list[str]):
-        self.features_order = features_order
-        self.features_order_ = None
+    def __init__(self, cols_order: list[str]):
+        self.cols_order = cols_order
+        self._cols_order = None
 
     def fit(self, X, y=None):
         check_fill(X)
-        self.features_order_ = [col for col in self.features_order if col in X.columns]
-        self.features_order_ += [col for col in X.columns if col not in self.features_order_]
+        self._cols_order = [col for col in self.cols_order if col in X.columns]
+        self._cols_order += [col for col in X.columns if col not in self._cols_order]
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self.features_order_, transformer_name="OrderFeatures")
-        X_ = X[self.features_order_]
+        check_transform(X, fitted_item=self._cols_order, transformer_name="ColsOrder")
+        X_ = X[self._cols_order]
         return X_
 
 
@@ -241,7 +241,7 @@ class ScalerPicker(BaseEstimator, TransformerMixin):
     def __init__(self, cols_to_scale: list[str], scaler_type: str = "standard"):
         self.cols_to_scale = cols_to_scale
         self.scaler_type = scaler_type
-        self.scaler = None
+        self._scaler = None
 
     def _get_scaler_class(self):
         if self.scaler_type == "standard":
@@ -262,18 +262,18 @@ class ScalerPicker(BaseEstimator, TransformerMixin):
         self.cols_to_scale = [col for col in self.cols_to_scale if col in X.columns]
         scaler = self._get_scaler_class()
         if scaler:
-            self.scaler = scaler().fit(X[self.cols_to_scale])
-            self.scaler = scaler().set_output(transform="pandas").fit(X[self.cols_to_scale])
+            self._scaler = scaler().fit(X[self.cols_to_scale])
+            self._scaler = scaler().set_output(transform="pandas").fit(X[self.cols_to_scale])
         else:
-            self.scaler = "skip"
+            self._scaler = "skip"
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self.scaler, transformer_name="CustomScaler")
+        check_transform(X, fitted_item=self._scaler, transformer_name="CustomScaler")
         X_ = X.copy()
-        if self.scaler == "skip":
+        if self._scaler == "skip":
             return X_
-        X_[self.cols_to_scale] = self.scaler.transform(X_[self.cols_to_scale])
+        X_[self.cols_to_scale] = self._scaler.transform(X_[self.cols_to_scale])
         return X_
 
 
@@ -290,7 +290,7 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
             check_key_tuple_empty_intersection(cols_to_impute)
         self.cols_to_impute = cols_to_impute
         self.strategy = strategy
-        self.imputer = None
+        self._imputer = None
 
     def fit(self, X, y=None):
         check_fill(X)
@@ -301,28 +301,28 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
             self.cols_to_impute = X.columns
 
         if self.strategy == "constant":
-            self.imputer = {}
+            self._imputer = {}
             for cols, fill_value in self.cols_to_impute.items():
                 cols_to_impute = [col for col in cols if col in X.columns]
                 if len(cols_to_impute) != 0:
-                    self.imputer[tuple(cols_to_impute)] = (
+                    self._imputer[tuple(cols_to_impute)] = (
                         SimpleImputer(strategy="constant", fill_value=fill_value, keep_empty_features=True)
                         .set_output(transform="pandas")
                         .fit(X[cols_to_impute])
                     )
         elif self.strategy in ("mean", "median", "most_frequent"):
             cols_to_impute = [col for col in self.cols_to_impute if col in X.columns]
-            self.imputer = (
+            self._imputer = (
                 SimpleImputer(strategy=self.strategy, keep_empty_features=True)
                 .set_output(transform="pandas")
                 .fit(X[cols_to_impute])
             )
         elif self.strategy == "max":
             cols_to_impute = [col for col in self.cols_to_impute if col in X.columns]
-            self.imputer = {}
+            self._imputer = {}
 
             for col in cols_to_impute:
-                self.imputer[col] = (
+                self._imputer[col] = (
                     SimpleImputer(strategy="constant", fill_value=X[col].max(), keep_empty_features=True)
                     .set_output(transform="pandas")
                     .fit(X[[col]])
@@ -333,17 +333,17 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self.imputer, transformer_name="ConstantImputer")
+        check_transform(X, fitted_item=self._imputer, transformer_name="ConstantImputer")
         X_ = X.copy()
 
         if self.strategy == "constant":
-            for cols, imputer in self.imputer.items():
+            for cols, imputer in self._imputer.items():
                 cols = list(cols)
                 X_[cols] = imputer.transform(X_[cols])
         elif self.strategy == "max":
-            for col, imputer in self.imputer.items():
+            for col, imputer in self._imputer.items():
                 X_[col] = imputer.transform(X_[[col]])
         else:
-            X_ = self.imputer.transform(X_)
+            X_ = self._imputer.transform(X_)
 
         return X_

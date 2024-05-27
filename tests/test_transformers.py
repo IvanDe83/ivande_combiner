@@ -6,8 +6,8 @@ from sklearn.exceptions import NotFittedError
 from ivande_combiner.transformers import (
     CalendarExtractor,
     CatCaster,
-    FeaturesOrder,
-    NoInfoFeatureRemover,
+    ColsOrder,
+    NoInfoColsRemover,
     OutlierRemover,
     ScalerPicker,
     SimpleImputerPicker,
@@ -55,7 +55,7 @@ class TestCalendarExtractor:
         pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)
 
 
-class TestNoInfoFeatureRemover:
+class TestNoInfoColsRemover:
     @pytest.fixture(autouse=True)
     def setup(self):
         self.df = pd.DataFrame(
@@ -66,36 +66,36 @@ class TestNoInfoFeatureRemover:
             }
         )
 
-    def test_no_info_feature_removed(self):
-        no_info_feature_remover = NoInfoFeatureRemover()
+    def test_no_info_cols_removed(self):
+        t = NoInfoColsRemover()
         expected = pd.DataFrame(
             {
                 "col_1": [1, 2],
             }
         )
-        calculated = no_info_feature_remover.fit_transform(self.df)
+        calculated = t.fit_transform(self.df)
         pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)
 
     def test_can_except_columns(self):
-        no_info_feature_remover = NoInfoFeatureRemover(cols_to_except=["no_info_1"])
+        t = NoInfoColsRemover(cols_to_except=["no_info_1"])
         expected = pd.DataFrame(
             {
                 "col_1": [1, 2],
                 "no_info_1": [1, 1],
             }
         )
-        calculated = no_info_feature_remover.fit_transform(self.df)
+        calculated = t.fit_transform(self.df)
         pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)
 
     def test_raise_error_if_wrong_type_in_fit(self):
         with pytest.raises(ValueError) as excinfo:
-            NoInfoFeatureRemover().fit("wrong_type")
+            NoInfoColsRemover().fit("wrong_type")
         assert "X is not pandas DataFrame" in str(excinfo.value)
 
     def test_raise_error_if_not_fitted(self):
         with pytest.raises(NotFittedError) as excinfo:
-            NoInfoFeatureRemover().transform(self.df)
-        assert "NoInfoFeatureRemover transformer was not fitted" in str(excinfo.value)
+            NoInfoColsRemover().transform(self.df)
+        assert "NoInfoColsRemover transformer was not fitted" in str(excinfo.value)
 
 
 class TestOutlierRemover:
@@ -196,7 +196,7 @@ class TestCatCaster:
         assert calculated["col_3"].dtype == "int64"
 
 
-class TestOrderFeatures:
+class TestColsOrder:
     @pytest.fixture(autouse=True)
     def setup(self):
         self.df = pd.DataFrame(
@@ -210,7 +210,7 @@ class TestOrderFeatures:
 
     def test_correct_outcome_order(self):
         expected = ["col_1", "col_2", "col_3", "col_0"]
-        t = FeaturesOrder(features_order=expected[: -1])
+        t = ColsOrder(cols_order=expected[: -1])
         calculated = t.fit_transform(self.df)
         assert expected == list(calculated.columns)
 

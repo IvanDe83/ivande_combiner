@@ -281,12 +281,12 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
     """
     impute missing values with a SimpleImputer
 
-    :param strategy: strategy for SimpleImputer. Possible values: "constant", "mean", "median", "most_frequent"
+    :param strategy: strategy for SimpleImputer. Possible values: "constant", "mean", "median", "most_frequent", "max"
     :param cols_to_impute: dictionary with tuple column names as keys and fill values as values
         (only for strategy="constant")
     """
-    def __init__(self, strategy: str = "constant", cols_to_impute: dict[tuple[str], int] = None):
-        if cols_to_impute is not None:
+    def __init__(self, strategy: str = "constant", cols_to_impute: dict[tuple[str], int] | list[str] = None):
+        if cols_to_impute is not None and isinstance(cols_to_impute, dict):
             check_key_tuple_empty_intersection(cols_to_impute)
         self.cols_to_impute = cols_to_impute
         self.strategy = strategy
@@ -308,9 +308,22 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
                         .fit(X[cols_to_impute])
                     )
         elif self.strategy in ("mean", "median", "most_frequent"):
+            cols_to_impute = [col for col in self.cols_to_impute if col in X.columns]
             self.imputer = (
-                SimpleImputer(strategy=self.strategy, keep_empty_features=True).set_output(transform="pandas").fit(X)
+                SimpleImputer(strategy=self.strategy, keep_empty_features=True)
+                .set_output(transform="pandas")
+                .fit(X[cols_to_impute])
             )
+        elif self.strategy == "max":
+            cols_to_impute = [col for col in self.cols_to_impute if col in X.columns]
+            self.imputer = {}
+
+            for col in cols_to_impute:
+                self.imputer[col] = (
+                    SimpleImputer(strategy="constant", fill_value=X[col].max(), keep_empty_features=True)
+                    .set_output(transform="pandas")
+                    .fit(X[[col]])
+                )
         else:
             raise ValueError(f"unknown strategy {self.strategy} should be constant, mean, median or most_frequent")
 
@@ -324,6 +337,9 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
             for cols, imputer in self.imputer.items():
                 cols = list(cols)
                 X_[cols] = imputer.transform(X_[cols])
+        elif self.strategy == "max":
+            for col, imputer in self.imputer.items():
+                X_[col] = imputer.transform(X_[[col]])
         else:
             X_ = self.imputer.transform(X_)
 

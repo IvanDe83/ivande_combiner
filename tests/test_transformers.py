@@ -274,7 +274,7 @@ class TestScalerPicker:
         assert "unknown method wrong_method for outlier remover" in str(excinfo.value)
 
 
-class TestConstantImputer:
+class TestSimpleImputerPicker:
     @pytest.fixture(autouse=True)
     def setup(self):
         self.df_nan = pd.DataFrame(
@@ -298,19 +298,25 @@ class TestConstantImputer:
                 {"col_1": [1, 2, 3, None], "col_2": [None, 1, 2, 12]},
                 {"col_1": [1, 2, 3, 2], "col_2": [5, 1, 2, 12]},
                 "mean",
-                None,
+                ["col_1", "col_2", "col_3"],
             ),
             (
                 {"col_1": [1, 2, 3, None], "col_2": [None, 1, 2, 12]},
                 {"col_1": [1, 2, 3, 2], "col_2": [2, 1, 2, 12]},
                 "median",
-                None,
+                ["col_1", "col_2", "col_3"],
             ),
             (
                 {"col_1": [1, 2, 1, None], "col_2": [None, 12, 2, 12]},
                 {"col_1": [1, 2, 1, 1], "col_2": [12, 12, 2, 12]},
                 "most_frequent",
-                None,
+                ["col_1", "col_2", "col_3"],
+            ),
+            (
+                {"col_1": [1, 3, 2, None], "col_2": [None, None, 1, 4]},
+                {"col_1": [1, 3, 2, 3], "col_2": [4, 4, 1, 4]},
+                "max",
+                ["col_1", "col_2", "col_3"],
             ),
         ],
         ids=[
@@ -318,6 +324,7 @@ class TestConstantImputer:
             "mean_impute",
             "median_impute",
             "most_frequent_impute",
+            "max_impute",
         ],
     )
     def test_correct_impute(self, input_data, expected_output, strategy, cols_to_impute):

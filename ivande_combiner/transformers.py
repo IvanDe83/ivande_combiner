@@ -316,7 +316,7 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
             raise ValueError("there are columns with all missing values")
 
         if self.cols_to_impute is None:
-            self.cols_to_impute = X.columns
+            self.cols_to_impute = list(X.columns)
 
         if self.strategy == "constant":
             self._imputer = {}

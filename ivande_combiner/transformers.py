@@ -91,7 +91,7 @@ class NoInfoColsRemover(BaseEstimator, TransformerMixin):
                 self._cols_to_remove.append(col)
 
         if self.verbose and self._cols_to_remove:
-            print(f"Columns {self._cols_to_remove} have no info and will be removed")
+            print(f"columns {self._cols_to_remove} have no info and will be removed")
 
         return self
 
@@ -271,9 +271,13 @@ class ScalerPicker(BaseEstimator, TransformerMixin):
     def transform(self, X):
         check_transform(X, fitted_item=self._scaler, transformer_name="CustomScaler")
         X_ = X.copy()
+
         if self._scaler == "skip":
             return X_
+
         X_[self.cols_to_scale] = self._scaler.transform(X_[self.cols_to_scale])
+        X_[self.cols_to_scale] = X_[self.cols_to_scale].astype(float)
+
         return X_
 
 
@@ -291,6 +295,20 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
         self.cols_to_impute = cols_to_impute
         self.strategy = strategy
         self._imputer = None
+
+    def _cast_to_float(self, X: pd.DataFrame) -> pd.DataFrame:
+        if self.cols_to_impute is None:
+            cols = X.columns
+        elif isinstance(self.cols_to_impute, dict):
+            cols = [col for cols in self.cols_to_impute for col in cols if col in X.columns]
+        elif isinstance(self.cols_to_impute, list):
+            cols = [col for col in self.cols_to_impute if col in X.columns]
+        else:
+            raise ValueError("cols_to_impute should be dict or list or None")
+
+        X[cols] = X[cols].astype(float)
+
+        return X
 
     def fit(self, X, y=None):
         check_fill(X)
@@ -345,5 +363,7 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
                 X_[col] = imputer.transform(X_[[col]])
         else:
             X_ = self._imputer.transform(X_)
+
+        X_ = self._cast_to_float(X_)
 
         return X_

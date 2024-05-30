@@ -27,26 +27,29 @@ def generate_ratio(first_col: pd.Series, second_col: pd.Series) -> pd.Series:
     return s
 
 
-def detect_anomaly(df: pd.DataFrame):
+def detect_anomaly(df: pd.DataFrame | pd.Series):
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
+
     threshold = 1e307
     anomaly_details = []
 
-    # Check for NaNs in each column
+    # check for NaNs in each column
     nan_columns = df.columns[df.isna().any()].tolist()
     if nan_columns:
         anomaly_details.append(f"NaN values found in columns: {nan_columns}")
 
-    # Check for infinite values in each column
+    # check for infinite values in each column
     inf_columns = df.columns[np.isinf(df).any()].tolist()
     if inf_columns:
-        anomaly_details.append(f"Infinite values found in columns: {inf_columns}")
+        anomaly_details.append(f"infinite values found in columns: {inf_columns}")
 
-    # Check for values exceeding the threshold
+    # check for values exceeding the threshold
     large_value_columns = df.columns[(df.abs() > threshold).any()].tolist()
     if large_value_columns:
-        anomaly_details.append(f"Values exceeding threshold found in columns: {large_value_columns}")
+        anomaly_details.append(f"values exceeding threshold found in columns: {large_value_columns}")
 
-    # If any anomalies are found, raise a ValueError with the details
+    # if any anomalies are found, raise a ValueError with the details
     if anomaly_details:
         error_message = "anomalies detected:\n" + "\n".join(anomaly_details)
         raise ValueError(error_message)

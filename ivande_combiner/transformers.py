@@ -329,11 +329,11 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
                         .fit(X[cols_to_impute])
                     )
         elif self.strategy in ("mean", "median", "most_frequent"):
-            cols_to_impute = [col for col in self.cols_to_impute if col in X.columns]
+            self.cols_to_impute = [col for col in self.cols_to_impute if col in X.columns]
             self._imputer = (
                 SimpleImputer(strategy=self.strategy, keep_empty_features=True)
                 .set_output(transform="pandas")
-                .fit(X[cols_to_impute])
+                .fit(X[self.cols_to_impute])
             )
         elif self.strategy == "max":
             cols_to_impute = [col for col in self.cols_to_impute if col in X.columns]
@@ -362,7 +362,7 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
             for col, imputer in self._imputer.items():
                 X_[col] = imputer.transform(X_[[col]])
         else:
-            X_ = self._imputer.transform(X_)
+            X_[self.cols_to_impute] = self._imputer.transform(X_[self.cols_to_impute])
 
         X_ = self._cast_to_float(X_)
 

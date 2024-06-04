@@ -318,6 +318,12 @@ class TestSimpleImputerPicker:
                 "max",
                 ["col_1", "col_2", "col_3"],
             ),
+            (
+                {"col_1": [1, 3, 2, None], "col_2": [None, None, 1, 4]},
+                {"col_1": [1, 3, 2, 2], "col_2": [2.5, 2.5, 1, 4]},
+                "mean",
+                None,
+            ),
         ],
         ids=[
             "constant_impute",
@@ -325,6 +331,7 @@ class TestSimpleImputerPicker:
             "median_impute",
             "most_frequent_impute",
             "max_impute",
+            "cols_to_impute_is_none",
         ],
     )
     def test_correct_impute(self, input_data, expected_output, strategy, cols_to_impute):

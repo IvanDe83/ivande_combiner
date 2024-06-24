@@ -53,3 +53,37 @@ def detect_anomaly(df: pd.DataFrame | pd.Series):
     if anomaly_details:
         error_message = "anomalies detected:\n" + "\n".join(anomaly_details)
         raise ValueError(error_message)
+
+
+def expand_df(df: pd.DataFrame, n: int, copy: bool = False) -> pd.DataFrame:
+    """
+    Expands a pandas DataFrame by duplicating each row 'n' times.
+
+    Parameters:
+    df (pd.DataFrame): The DataFrame to be expanded.
+    n (int): The number of times each row in the DataFrame should be duplicated.
+    copy (bool): If True, returns a copy of the expanded DataFrame. Defaults to False.
+
+    Returns:
+    pd.DataFrame: The expanded DataFrame.
+
+    Raises:
+    ValueError: If 'n' is not a non-negative integer.
+    TypeError: If 'df' is not a pandas DataFrame.
+    """
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("The 'df' argument must be a pandas DataFrame.")
+
+    if not isinstance(n, int) or n < 0:
+        raise ValueError("The 'n' argument must be a non-negative integer.")
+
+    if n == 0:
+        return pd.DataFrame(columns=df.columns) if copy else df.iloc[0:0]
+
+    if n == 1:
+        return df.copy() if copy else df
+
+    expand_idx = np.repeat(df.index, n)
+    expanded_df = df.loc[expand_idx].reset_index(drop=True)
+
+    return expanded_df.copy() if copy else expanded_df

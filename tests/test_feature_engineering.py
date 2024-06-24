@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ivande_combiner.feature_engineering import detect_anomaly, generate_ratio
+from ivande_combiner.feature_engineering import detect_anomaly, expand_df, generate_ratio
 
 
 class TestFeatureEngineering:
@@ -100,3 +100,37 @@ class TestDetectAnomaly:
     def test_no_anomaly_error(self):
         df = pd.DataFrame({"col_1": [1, 2, 3], "col_2": [4, 5, 6]})
         detect_anomaly(df)
+
+
+class TestExpandDf:
+    @pytest.mark.parametrize(
+        "input_data, expected_output, n",
+        [
+            (
+                {"col_1": [1, 2, 3], "col_2": [4, 5, 6]},
+                {"col_1": [], "col_2": []},
+                0,
+            ),
+            (
+                {"col_1": [1, 2, 3], "col_2": [4, 5, 6]},
+                {"col_1": [1, 2, 3], "col_2": [4, 5, 6]},
+                1,
+            ),
+            (
+                {"col_1": [1, 2, 3], "col_2": [4, 5, 6]},
+                {"col_1": [1, 1, 1, 2, 2, 2, 3, 3, 3], "col_2": [4, 4, 4, 5, 5, 5, 6, 6, 6]},
+                3,
+            ),
+        ],
+        ids=[
+            "n=0",
+            "n=1",
+            "n=3",
+        ],
+    )
+    def test_expand_df(self, input_data, expected_output, n):
+        df = pd.DataFrame(input_data)
+        expected = pd.DataFrame(expected_output)
+        calculated = expand_df(df, n)
+
+        pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)

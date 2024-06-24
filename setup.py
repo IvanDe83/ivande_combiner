@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ivande_combiner",
-    version="0.0.24",
+    version="0.0.25",
     packages=find_packages(),
     description="basic functionality for classic sklearn ml",
     long_description=open("README.md").read(),
@@ -13,7 +13,7 @@ setup(
     license="MIT",
     install_requires=[
         "scikit-learn==1.5.0",
-        "pandas==2.2.2",
+        "pandas~=1.3",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

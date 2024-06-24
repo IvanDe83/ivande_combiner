@@ -16,42 +16,68 @@ from ivande_combiner.transformers import (
 
 
 class TestCalendarExtractor:
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.df = pd.DataFrame(
-            {
-                "date": ["2022-01-01", "2023-02-28"],
-            }
-        )
+    @pytest.mark.parametrize(
+        "input_data, expected_output, calendar_level",
+        [
+            (
+                    {"date": pd.to_datetime(["2022-01-01", "2023-02-28"]), "value": [1, 2]},
+                    {"value": [1, 2]},
+                    0,
+            ),
+            (
+                    {"date": pd.to_datetime(["2022-01-01", "2023-02-28"]), "value": [1, 2]},
+                    {"value": [1, 2], "date_year": [2022, 2023], "date_month": [1, 2]},
+                    2,
+            ),
+            (
+                    {"date": pd.to_datetime(["2022-01-01", "2023-02-28"]), "value": [1, 2]},
+                    {
+                        "value": [1, 2],
+                        "date_year": [2022, 2023],
+                        "date_month": [1, 2],
+                        "date_day": [1, 28],
+                        "date_dayofweek": [5, 1],
+                        "date_dayofyear": [1, 59],
+                    },
+                    5,
+            ),
+            (
+                    {
+                        "date1": pd.to_datetime(["2022-01-01", "2023-02-28"]),
+                        "date2": pd.to_datetime(["2022-01-01", "2023-03-28"]),
+                        "value": [1, 2],
+                    },
+                    {
+                        "value": [1, 2],
+                        "date1_year": [2022, 2023],
+                        "date1_month": [1, 2],
+                        "date1_day": [1, 28],
+                        "date1_dayofweek": [5, 1],
+                        "date1_dayofyear": [1, 59],
+                        "date1_weekofyear": [52, 9],
+                        "date2_year": [2022, 2023],
+                        "date2_month": [1, 3],
+                        "date2_day": [1, 28],
+                        "date2_dayofweek": [5, 1],
+                        "date2_dayofyear": [1, 87],
+                        "date2_weekofyear": [52, 13],
+                    },
+                    None,
+            ),
+        ],
+        ids=[
+            "calendar_level_0",
+            "calendar_level_2",
+            "calendar_level_5",
+            "calendar_level_None_with_two_date_columns",
+        ],
+    )
+    def test_calendar(self, input_data, expected_output, calendar_level):
+        df = pd.DataFrame(input_data)
+        expected = pd.DataFrame(expected_output)
+        calendar_extractor = CalendarExtractor(calendar_level=calendar_level)
+        calculated = calendar_extractor.fit_transform(df)
 
-    def test_calendar_level_0(self):
-        calendar_extractor = CalendarExtractor(date_col="date", calendar_level=0)
-        calculated = calendar_extractor.fit_transform(self.df)
-        assert calculated.empty
-
-    def test_calendar_level_2(self):
-        calendar_extractor = CalendarExtractor(date_col="date", calendar_level=2)
-        expected = pd.DataFrame(
-            {
-                "year": [2022, 2023],
-                "month": [1, 2],
-            }
-        )
-        calculated = calendar_extractor.fit_transform(self.df)
-        pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)
-
-    def test_calendar_level_5(self):
-        calendar_extractor = CalendarExtractor(date_col="date", calendar_level=5)
-        expected = pd.DataFrame(
-            {
-                "year": [2022, 2023],
-                "month": [1, 2],
-                "day": [1, 28],
-                "dayofweek": [5, 1],
-                "dayofyear": [1, 59],
-            }
-        )
-        calculated = calendar_extractor.fit_transform(self.df)
         pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)
 
 

@@ -10,7 +10,6 @@ class CalendarExtractor(BaseEstimator, TransformerMixin):
     """
     extract number data from date column and them to the pandas dataframe
 
-    :param date_col: column with dates
     :param calendar_level: from 0 to 5,
         0 - only year,
         1 - year and month,
@@ -19,52 +18,55 @@ class CalendarExtractor(BaseEstimator, TransformerMixin):
         4 - year, month, day, dayofweek, dayofyear,
         5 - year, month, day, dayofweek, dayofyear, weekofyear
     """
-    def __init__(self, date_col, calendar_level: int = None):
-        self.date_col = date_col
+    def __init__(self, calendar_level: int = None):
+        self.date_cols = None
         self.calendar_level = calendar_level
 
     def fit(self, X, y=None):
+        check_fill(X)
+        self.date_cols = [col for col in X.columns if pd.api.types.is_datetime64_any_dtype(X[col])]
         return self
 
     def transform(self, X):
-        check_transform(X, is_check_fill=False)
+        check_transform(X, fitted_item=self.date_cols, transformer_name=self.__class__.__name__)
 
         X_ = X.copy()
-        X_[self.date_col] = pd.to_datetime(X_[self.date_col])
         cols_to_add = []
 
         what_to_generate = ["year", "month", "day", "dayofweek", "dayofyear", "weekofyear"]
         if self.calendar_level is not None:
             what_to_generate = what_to_generate[: self.calendar_level]
 
-        for what in what_to_generate:
-            if what == "year":
-                year_col = X_[self.date_col].dt.year
-                year_col.name = "year"
-                cols_to_add.append(year_col)
-            elif what == "month":
-                month_col = X_[self.date_col].dt.month
-                month_col.name = "month"
-                cols_to_add.append(month_col)
-            elif what == "day":
-                day_col = X_[self.date_col].dt.day
-                day_col.name = "day"
-                cols_to_add.append(day_col)
-            elif what == "dayofweek":
-                dayofweek_col = X_[self.date_col].dt.dayofweek
-                dayofweek_col.name = "dayofweek"
-                cols_to_add.append(dayofweek_col)
-            elif what == "dayofyear":
-                dayofyear_cl = X_[self.date_col].dt.dayofyear
-                dayofyear_cl.name = "dayofyear"
-                cols_to_add.append(dayofyear_cl)
-            elif what == "weekofyear":
-                weekofyear_col = X_[self.date_col].dt.isocalendar().week
-                weekofyear_col.name = "weekofyear"
-            else:
-                raise ValueError(f"Unknown parameter {what} in what_to_generate")
+        for dc in self.date_cols:
+            for what in what_to_generate:
+                if what == "year":
+                    year_col = X_[dc].dt.year
+                    year_col.name = dc + "_" + "year"
+                    cols_to_add.append(year_col)
+                elif what == "month":
+                    month_col = X_[dc].dt.month
+                    month_col.name = dc + "_" + "month"
+                    cols_to_add.append(month_col)
+                elif what == "day":
+                    day_col = X_[dc].dt.day
+                    day_col.name = dc + "_" + "day"
+                    cols_to_add.append(day_col)
+                elif what == "dayofweek":
+                    dayofweek_col = X_[dc].dt.dayofweek
+                    dayofweek_col.name = dc + "_" + "dayofweek"
+                    cols_to_add.append(dayofweek_col)
+                elif what == "dayofyear":
+                    dayofyear_cl = X_[dc].dt.dayofyear
+                    dayofyear_cl.name = dc + "_" + "dayofyear"
+                    cols_to_add.append(dayofyear_cl)
+                elif what == "weekofyear":
+                    weekofyear_col = X_[dc].dt.isocalendar().week
+                    weekofyear_col.name = dc + "_" + "weekofyear"
+                    cols_to_add.append(weekofyear_col)
+                else:
+                    raise ValueError(f"unknown parameter {what} in what_to_generate")
 
-        X_.drop(self.date_col, axis=1, inplace=True)
+        X_.drop(self.date_cols, axis=1, inplace=True)
         X_ = pd.concat([X_, *cols_to_add], axis=1)
 
         return X_

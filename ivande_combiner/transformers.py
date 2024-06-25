@@ -98,7 +98,7 @@ class NoInfoColsRemover(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self._cols_to_remove, transformer_name="NoInfoColsRemover")
+        check_transform(X, fitted_item=self._cols_to_remove, transformer_name=self.__class__.__name__)
         X_ = X.drop(self._cols_to_remove, axis=1)
         return X_
 
@@ -153,7 +153,7 @@ class OutlierRemover(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self._col_thresholds, transformer_name="OutlierRemover")
+        check_transform(X, fitted_item=self._col_thresholds, transformer_name=self.__class__.__name__)
         X_ = X.copy()
 
         for col in self.cols_to_transform:
@@ -179,7 +179,7 @@ class WithAnotherColumnImputer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self.cols_to_impute, transformer_name="WithAnotherColumnImputer")
+        check_transform(X, fitted_item=self.cols_to_impute, transformer_name=self.__class__.__name__)
         X_ = X.copy()
 
         for col in self.cols_to_impute:
@@ -226,7 +226,7 @@ class ColsOrder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self._cols_order, transformer_name="ColsOrder")
+        check_transform(X, fitted_item=self._cols_order, transformer_name=self.__class__.__name__)
         X_ = X[self._cols_order]
         return X_
 
@@ -271,7 +271,7 @@ class ScalerPicker(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self._scaler, transformer_name="CustomScaler")
+        check_transform(X, fitted_item=self._scaler, transformer_name=self.__class__.__name__)
         X_ = X.copy()
 
         if self._scaler == "skip":
@@ -353,7 +353,7 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        check_transform(X, fitted_item=self._imputer, transformer_name="ConstantImputer")
+        check_transform(X, fitted_item=self._imputer, transformer_name=self.__class__.__name__)
         X_ = X.copy()
 
         if self.strategy == "constant":

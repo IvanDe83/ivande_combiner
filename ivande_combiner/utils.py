@@ -10,7 +10,7 @@ def check_fill(X: any) -> None:
 def check_transform(X: any, fitted_item: any = None, transformer_name: str = "", is_check_fill: bool = True) -> None:
     check_fill(X)
 
-    if is_check_fill and not fitted_item:
+    if is_check_fill and fitted_item is not None:
         raise NotFittedError(f"{transformer_name} transformer was not fitted")
 
 

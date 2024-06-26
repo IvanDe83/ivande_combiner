@@ -264,7 +264,6 @@ class ScalerPicker(BaseEstimator, TransformerMixin):
         self.cols_to_scale = [col for col in self.cols_to_scale if col in X.columns]
         scaler = self._get_scaler_class()
         if scaler:
-            self._scaler = scaler().fit(X[self.cols_to_scale])
             self._scaler = scaler().set_output(transform="pandas").fit(X[self.cols_to_scale])
         else:
             self._scaler = "skip"

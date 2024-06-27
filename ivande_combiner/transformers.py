@@ -314,7 +314,8 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         check_fill(X)
         if X.isnull().all().any():
-            raise ValueError("there are columns with all missing values")
+            nan_cols = X.columns[X.isnull().all()].tolist()
+            raise ValueError(f"columns with all nans {nan_cols}")
 
         if self.cols_to_impute is None:
             self.cols_to_impute = list(X.columns)

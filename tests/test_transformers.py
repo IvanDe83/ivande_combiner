@@ -384,4 +384,4 @@ class TestSimpleImputerPicker:
         with pytest.raises(ValueError) as excinfo:
             t = SimpleImputerPicker(strategy="mean")
             t.fit_transform(self.df_nan)
-        assert "there are columns with all missing values" in str(excinfo.value)
+        assert "columns with all nans ['col_2']" in str(excinfo.value)

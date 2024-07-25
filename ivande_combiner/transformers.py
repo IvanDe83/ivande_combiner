@@ -240,7 +240,7 @@ class ScalerPicker(BaseEstimator, TransformerMixin):
         "standard" - StandardScaler
         "minmax" - MinMaxScaler
     """
-    def __init__(self, cols_to_scale: list[str], scaler_type: str = "standard"):
+    def __init__(self, cols_to_scale: list[str] = None, scaler_type: str = "standard"):
         self.cols_to_scale = cols_to_scale
         self.scaler_type = scaler_type
         self._scaler = None
@@ -261,7 +261,12 @@ class ScalerPicker(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         check_fill(X)
-        self.cols_to_scale = [col for col in self.cols_to_scale if col in X.columns]
+
+        if self.cols_to_scale is None:
+            self.cols_to_scale = list(X.columns)
+        else:
+            self.cols_to_scale = [col for col in self.cols_to_scale if col in X.columns]
+
         scaler = self._get_scaler_class()
         if scaler:
             self._scaler = scaler().set_output(transform="pandas").fit(X[self.cols_to_scale])

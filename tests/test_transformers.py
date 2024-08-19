@@ -30,7 +30,7 @@ class TestCalendarExtractor:
                     2,
             ),
             (
-                    {"date": pd.to_datetime(["2022-01-01", "2023-02-28"]), "value": [1, 2]},
+                    {"date": pd.to_datetime(["2022-01-01 23:59:59", "2023-02-28 02:03:04"]), "value": [1, 2]},
                     {
                         "value": [1, 2],
                         "date_year": [2022, 2023],
@@ -38,13 +38,15 @@ class TestCalendarExtractor:
                         "date_day": [1, 28],
                         "date_dayofweek": [5, 1],
                         "date_dayofyear": [1, 59],
+                        "date_weekofyear": [52, 9],
+                        "date_hour": [23, 2],
                     },
-                    5,
+                    7,
             ),
             (
                     {
-                        "date1": pd.to_datetime(["2022-01-01", "2023-02-28"]),
-                        "date2": pd.to_datetime(["2022-01-01", "2023-03-28"]),
+                        "date1": pd.to_datetime(["2022-01-01 23:59:59", "2023-02-28 02:03:04"]),
+                        "date2": pd.to_datetime(["2022-01-01 23:59:59", "2023-03-28 02:03:04"]),
                         "value": [1, 2],
                     },
                     {
@@ -55,12 +57,14 @@ class TestCalendarExtractor:
                         "date1_dayofweek": [5, 1],
                         "date1_dayofyear": [1, 59],
                         "date1_weekofyear": [52, 9],
+                        "date1_hour": [23, 2],
                         "date2_year": [2022, 2023],
                         "date2_month": [1, 3],
                         "date2_day": [1, 28],
                         "date2_dayofweek": [5, 1],
                         "date2_dayofyear": [1, 87],
                         "date2_weekofyear": [52, 13],
+                        "date2_hour": [23, 2],
                     },
                     None,
             ),
@@ -68,7 +72,7 @@ class TestCalendarExtractor:
         ids=[
             "calendar_level_0",
             "calendar_level_2",
-            "calendar_level_5",
+            "calendar_level_7",
             "calendar_level_None_with_two_date_columns",
         ],
     )
@@ -77,7 +81,6 @@ class TestCalendarExtractor:
         expected = pd.DataFrame(expected_output)
         calendar_extractor = CalendarExtractor(calendar_level=calendar_level)
         calculated = calendar_extractor.fit_transform(df)
-
         pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)
 
 

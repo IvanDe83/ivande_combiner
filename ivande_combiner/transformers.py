@@ -10,13 +10,15 @@ class CalendarExtractor(BaseEstimator, TransformerMixin):
     """
     extract number data from date column and them to the pandas dataframe
 
-    :param calendar_level: from 0 to 5,
-        0 - only year,
-        1 - year and month,
-        2 - year, month, day,
-        3 - year, month, day, dayofweek,
-        4 - year, month, day, dayofweek, dayofyear,
-        5 - year, month, day, dayofweek, dayofyear, weekofyear
+    :param calendar_level: from 0 to 7,
+        0 - no data
+        1 - only year,
+        2 - year and month,
+        3 - year, month, day,
+        4 - year, month, day, dayofweek,
+        5 - year, month, day, dayofweek, dayofyear,
+        6 - year, month, day, dayofweek, dayofyear, weekofyear
+        7 - year, month, day, dayofweek, dayofyear, weekofyear, hour
     """
     def __init__(self, calendar_level: int = None):
         self.date_cols = None
@@ -33,7 +35,7 @@ class CalendarExtractor(BaseEstimator, TransformerMixin):
         X_ = X.copy()
         cols_to_add = []
 
-        what_to_generate = ["year", "month", "day", "dayofweek", "dayofyear", "weekofyear"]
+        what_to_generate = ["year", "month", "day", "dayofweek", "dayofyear", "weekofyear", "hour"]
         if self.calendar_level is not None:
             what_to_generate = what_to_generate[: self.calendar_level]
 
@@ -63,6 +65,10 @@ class CalendarExtractor(BaseEstimator, TransformerMixin):
                     weekofyear_col = X_[dc].dt.isocalendar().week
                     weekofyear_col.name = dc + "_" + "weekofyear"
                     cols_to_add.append(weekofyear_col)
+                elif what == "hour":
+                    hour_col = X_[dc].dt.hour
+                    hour_col.name = dc + "_" + "hour"
+                    cols_to_add.append(hour_col)
                 else:
                     raise ValueError(f"unknown parameter {what} in what_to_generate")
 

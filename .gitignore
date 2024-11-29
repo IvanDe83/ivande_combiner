@@ -12,6 +12,7 @@ conf/local/**
 # ignore everything in the following folders
 logs/**
 !logs/**/
+notebooks/**
 
 # also keep all .gitkeep files
 !.gitkeep

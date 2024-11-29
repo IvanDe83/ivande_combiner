@@ -86,7 +86,6 @@ class HolidayGenerator:
         self.df["ds"] = pd.to_datetime(self.df["ds"]).dt.date
         self._normalize()
 
-
     def filter_holidays(self, exclude_types: list[str]) -> None:
         """
         filter holidays by a list of holiday types
@@ -103,12 +102,12 @@ class HolidayGenerator:
         """
         self.df["lower_window"] = 0
         self.df["upper_window"] = 0
-    
+
         if windows is not None:
             self.df["lower_window"] = (
                 self.df["holiday"]
                 .map(
-                    lambda x: windows[x][0] 
+                    lambda x: windows[x][0]
                     if x in windows
                     else self.df.loc[self.df["holiday"] == x, "lower_window"].values[0]
                 )
@@ -116,8 +115,8 @@ class HolidayGenerator:
             self.df["upper_window"] = (
                 self.df["holiday"]
                 .map(
-                    lambda x: windows[x][1] 
-                    if x in windows 
+                    lambda x: windows[x][1]
+                    if x in windows
                     else self.df.loc[self.df["holiday"] == x, "upper_window"].values[0]
                 )
             )
@@ -130,4 +129,3 @@ class HolidayGenerator:
         self.df["ds"] = pd.to_datetime(self.df["ds"])
         self.df["ds"] = self.df["ds"].dt.date
         self._normalize()
-       

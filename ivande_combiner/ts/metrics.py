@@ -34,7 +34,6 @@ class TSMetric:
             ).mean()
         )
 
-
     def mape(self) -> float:
         """
         calculate MAPE for each

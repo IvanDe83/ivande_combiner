@@ -16,40 +16,22 @@ class TSMetric:
         """
         calculate MSE for each
         """
-        return float(
-            np.sqrt(
-                (
-                    (self.df["y_test"] - self.df["y_pred"]) ** 2 * self.df["weights"]
-                ).mean()
-            )
-        )
+        return float(np.sqrt(sum((self.df["y_test"] - self.df["y_pred"]) ** 2 * self.df["weights"])))
 
     def mae(self) -> float:
         """
         calculate MAE for each
         """
-        return float(
-            (
-                (self.df["y_test"] - self.df["y_pred"]).abs() * self.df["weights"]
-            ).mean()
-        )
+        return float(sum((self.df["y_test"] - self.df["y_pred"]).abs() * self.df["weights"]))
 
     def mape(self) -> float:
         """
         calculate MAPE for each
         """
-        return float(
-            (
-                ((self.df["y_test"] - self.df["y_pred"]) / self.df["y_test"]).abs() * self.df["weights"]
-            ).mean()
-        )
+        return float(sum(((self.df["y_test"] - self.df["y_pred"]) / self.df["y_test"]).abs() * self.df["weights"]))
 
     def smape(self) -> float:
         """
         calculate sMAPE for
         """
-        return float(
-            (
-                (np.abs(self.df["y_test"] - self.df["y_pred"]) / (self.df["y_test"] + self.df["y_pred"]) / 2).mean()
-            )
-        )
+        return abs(float(sum(((self.df["y_test"] - self.df["y_pred"]) / (self.df["y_test"] + self.df["y_pred"]) / 2))))

@@ -48,9 +48,11 @@ def get_closest_same_day_of_week(date):
 
 def extend_holidays_to_the_next_year(df: pd.DataFrame) -> pd.DataFrame:
     df["ds"] = pd.to_datetime(df["ds"])
+    min_ds = df["ds"].max() - relativedelta(years=1)
+    df_ = df[df["ds"] > min_ds]
 
     new_rows = []
-    for _, row in df.iterrows():
+    for _, row in df_.iterrows():
         new_date = get_closest_same_day_of_week(row["ds"])
         new_row = row.copy()
         new_row["ds"] = new_date

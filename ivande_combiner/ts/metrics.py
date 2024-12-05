@@ -72,7 +72,7 @@ def evaluate_prophet_on_months(prophet_model: Prophet, df: pd.DataFrame, horizon
         metrics_dict["MAPE"] += tsm.mape()
         metrics_dict["SMAPE"] += tsm.smape()
 
-        for key in metrics_dict:
-            metrics_dict[key] /= n
+    for key in metrics_dict:
+        metrics_dict[key] /= n
 
     return metrics_dict

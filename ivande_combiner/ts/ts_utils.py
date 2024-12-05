@@ -92,7 +92,7 @@ def leave_only_full_month(df: pd.DataFrame) -> pd.DataFrame:
     last_month_day = last_ds.days_in_month
 
     if last_day != last_month_day:
-        last_month = df.loc[df["ds"] == last_ds, "month"].squeeze()
+        last_month = df.loc[df["ds"] == last_ds, "month"].iloc[0]
         df = df[df["month"] != last_month]
 
     return df

@@ -378,3 +378,59 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
         X_ = self._cast_to_float(X_)
 
         return X_
+
+
+class GroupForwardFillTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, group_cols, order_col, value_cols=None):
+        self.group_cols = group_cols
+        self.order_col = order_col
+        self.value_cols = value_cols
+        self.memorized_values = None
+        self.memorized_dates = None
+
+    def fit(self, X, y=None):
+        check_fill(X)
+        X = X.copy()
+        X.sort_values(by=self.group_cols + [self.order_col], inplace=True)
+
+        if self.value_cols is None:
+            self.value_cols = [col for col in X.columns if col not in self.group_cols + [self.order_col]]
+
+        self.memorized_values = {}
+        self.memorized_dates = {}
+
+        for col in self.value_cols:
+            self.memorized_values[col] = {}
+            self.memorized_dates[col] = {}
+
+            for key, group in X.groupby(self.group_cols):
+                last_valid_index = group[col].last_valid_index()
+                if last_valid_index is not None:
+                    self.memorized_values[col][key] = group.loc[last_valid_index, col]
+                    self.memorized_dates[col][key] = group.loc[last_valid_index, self.order_col]
+
+        return self
+
+    def transform(self, X):
+        check_transform(X, fitted_item=self.memorized_values, transformer_name=self.__class__.__name__)
+        X = X.copy()
+        X.sort_values(by=self.group_cols + [self.order_col], inplace=True)
+
+        def apply_ffill(group):
+            key = tuple(group.name) if hasattr(group, "name") else tuple(group[self.group_cols].iloc[0])
+
+            for col in self.value_cols:
+                if key in self.memorized_values[col]:
+                    last_value = self.memorized_values[col][key]
+                    last_date = self.memorized_dates[col][key]
+
+                    group[col] = group[col].ffill()
+                    group.loc[group[self.order_col] > last_date, col] = group[col].fillna(last_value)
+
+            return group
+
+        return (
+            X
+            .groupby(by=self.group_cols, as_index=False)[X.columns]
+            .apply(apply_ffill, include_groups=True).reset_index(drop=True)
+        )

@@ -7,6 +7,7 @@ from ivande_combiner.transformers import (
     CalendarExtractor,
     CatCaster,
     ColsOrder,
+    GroupForwardFillTransformer,
     NoInfoColsRemover,
     OutlierRemover,
     ScalerPicker,
@@ -388,3 +389,31 @@ class TestSimpleImputerPicker:
             t = SimpleImputerPicker(strategy="mean")
             t.fit_transform(self.df_nan)
         assert "columns with all nans ['col_2']" in str(excinfo.value)
+
+
+class TestGroupForwardFillTransformer:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.df_nan = pd.DataFrame(
+            {
+                "A": np.repeat(np.arange(1, 5), 6),
+                "B": np.tile(np.repeat(["a", "b"], 3), 4),
+                "dt": np.tile(["2021-01-01", "2021-01-02", "2021-01-03"], 8),
+                "val1": [1, 2, 3, 1, 2, None, 1, None, None, None, None, None] * 2,
+                "val2": [None, 1, None, None, 1, 2, 1, 2, 3, 1, None, None] * 2,
+            }
+        )
+
+    def test_group_forward_fill(self):
+        expected = pd.DataFrame(
+            {
+                "A": np.repeat(np.arange(1, 5), 6),
+                "B": np.tile(np.repeat(["a", "b"], 3), 4),
+                "dt": np.tile(["2021-01-01", "2021-01-02", "2021-01-03"], 8),
+                "val1": [1, 2, 3, 1, 2, 2, 1, 1, 1, None, None, None] * 2,
+                "val2": [None, 1, 1, None, 1, 2, 1, 2, 3, 1, 1, 1] * 2,
+            }
+        )
+        t = GroupForwardFillTransformer(group_cols=["A", "B"], order_col="dt")
+        calculated = t.fit_transform(self.df_nan)
+        pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)

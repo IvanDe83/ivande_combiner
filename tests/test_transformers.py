@@ -414,6 +414,17 @@ class TestGroupForwardFillTransformer:
                 "val2": [None, 1, 1, None, 1, 2, 1, 2, 3, 1, 1, 1] * 2,
             }
         )
+        t = GroupForwardFillTransformer(group_cols=["A", "B"], order_col="dt", drop=False)
+        calculated = t.fit_transform(self.df_nan)
+        pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)
+
+    def test_drop(self):
+        expected = pd.DataFrame(
+            {
+                "val1": [1, 2, 3, 1, 2, 2, 1, 1, 1, None, None, None] * 2,
+                "val2": [None, 1, 1, None, 1, 2, 1, 2, 3, 1, 1, 1] * 2,
+            }
+        )
         t = GroupForwardFillTransformer(group_cols=["A", "B"], order_col="dt")
         calculated = t.fit_transform(self.df_nan)
         pd.testing.assert_frame_equal(expected, calculated, check_dtype=False)

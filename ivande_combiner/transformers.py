@@ -381,10 +381,11 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
 
 
 class GroupForwardFillTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, group_cols, order_col, value_cols=None):
+    def __init__(self, group_cols, order_col, value_cols=None, drop: bool = True):
         self.group_cols = group_cols
         self.order_col = order_col
         self.value_cols = value_cols
+        self.drop = drop
         self.memorized_values = None
         self.memorized_dates = None
 
@@ -429,8 +430,6 @@ class GroupForwardFillTransformer(BaseEstimator, TransformerMixin):
 
             return group
 
-        return (
-            X
-            .groupby(by=self.group_cols, as_index=False)[X.columns]
-            .apply(apply_ffill, include_groups=True).reset_index(drop=True)
-        )
+        X = X.groupby(by=self.group_cols, as_index=False)[X.columns].apply(apply_ffill).reset_index(drop=True)
+
+        return X.drop(columns=self.group_cols + [self.order_col]) if self.drop else X

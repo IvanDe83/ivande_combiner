@@ -392,7 +392,6 @@ class GroupForwardFillTransformer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         check_fill(X)
         X = X.copy()
-        X.sort_values(by=self.group_cols + [self.order_col], inplace=True)
 
         if self.value_cols is None:
             self.value_cols = [col for col in X.columns if col not in self.group_cols + [self.order_col]]
@@ -415,7 +414,6 @@ class GroupForwardFillTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         check_transform(X, fitted_item=self.memorized_values, transformer_name=self.__class__.__name__)
         X = X.copy()
-        X.sort_values(by=self.group_cols + [self.order_col], inplace=True)
 
         def apply_ffill(group):
             key = tuple(group.name) if hasattr(group, "name") else tuple(group[self.group_cols].iloc[0])

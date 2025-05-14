@@ -295,7 +295,8 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
     """
     impute missing values with a SimpleImputer
 
-    :param strategy: strategy for SimpleImputer. Possible values: "constant", "mean", "median", "most_frequent", "max"
+    :param strategy: strategy for SimpleImputer.
+        Possible values: "constant", "mean", "median", "most_frequent", "max", "skip"
     :param cols_to_impute: dictionary with tuple column names as keys and fill values as values
         (only for strategy="constant")
     """
@@ -356,6 +357,10 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
                     .set_output(transform="pandas")
                     .fit(X[[col]])
                 )
+
+        elif self.strategy == "skip":
+            self._imputer = "skip"
+
         else:
             raise ValueError(f"unknown strategy {self.strategy} should be constant, mean, median or most_frequent")
 
@@ -372,6 +377,8 @@ class SimpleImputerPicker(BaseEstimator, TransformerMixin):
         elif self.strategy == "max":
             for col, imputer in self._imputer.items():
                 X_[col] = imputer.transform(X_[[col]])
+        elif self.strategy == "skip":
+            pass
         else:
             X_[self.cols_to_impute] = self._imputer.transform(X_[self.cols_to_impute])
 
